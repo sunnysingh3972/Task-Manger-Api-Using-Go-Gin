@@ -8,16 +8,17 @@ import (
 )
 
 func main() {
+
 	db, err := database.InitDB()
 	if err != nil {
 		log.Fatalf("Error initializing database: %v", err)
 	}
 	defer db.Close()
-
+    
 	r := gin.Default()
 
 	taskHandler := handlers.NewTaskHandler(db)
-
+    
 	r.POST("/tasks", taskHandler.CreateTask)
 	r.GET("/tasks/:id", taskHandler.GetTask)
 	r.PUT("/tasks/:id", taskHandler.UpdateTask)

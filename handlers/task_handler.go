@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"database/sql"
-	"net/http"
-	"strconv"
 	"github.com/gin-gonic/gin"
 	"github.com/sunnysingh3972/Task-Manger-Api-Using-Go-Gin/models"
+	"net/http"
+	"strconv"
 )
 
 type TaskHandler struct {
@@ -16,6 +16,7 @@ func NewTaskHandler(db *sql.DB) *TaskHandler {
 	return &TaskHandler{DB: db}
 }
 
+// insert data into table
 func (h *TaskHandler) CreateTask(c *gin.Context) {
 	var task models.Task
 	if err := c.ShouldBindJSON(&task); err != nil {
@@ -36,6 +37,7 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 	c.JSON(http.StatusCreated, task)
 }
 
+// Get task by id
 func (h *TaskHandler) GetTask(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -54,6 +56,7 @@ func (h *TaskHandler) GetTask(c *gin.Context) {
 	c.JSON(http.StatusOK, task)
 }
 
+// update  a task by ID
 func (h *TaskHandler) UpdateTask(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
@@ -63,42 +66,41 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 		return
 	}
 	exists, err := h.idExists(id)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check if ID exists"})
-        return
-    }
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check if ID exists"})
+		return
+	}
 
-    if !exists {
-        c.JSON(http.StatusNotFound, gin.H{"error": "ID not found"})
-        return
-    }
+	if !exists {
+		c.JSON(http.StatusNotFound, gin.H{"error": "ID not found"})
+		return
+	}
 	// Update task in the database
-	_,e := h.DB.Exec("UPDATE tasks SET title=?, description=?, due_date=?, status=? WHERE id=?",
+	_, e := h.DB.Exec("UPDATE tasks SET title=?, description=?, due_date=?, status=? WHERE id=?",
 		task.Title, task.Description, task.DueDate, task.Status, id)
 	if e != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update task"})
 		return
 	}
 
-	
 	task.ID = id
 	c.JSON(http.StatusOK, task)
-   
+
 }
 
 // Delete a task by ID
 func (h *TaskHandler) DeleteTask(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	exists, err := h.idExists(id)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check if ID exists"})
-        return
-    }
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check if ID exists"})
+		return
+	}
 
-    if !exists {
-        c.JSON(http.StatusNotFound, gin.H{"error": "ID not found"})
-        return
-    }
+	if !exists {
+		c.JSON(http.StatusNotFound, gin.H{"error": "ID not found"})
+		return
+	}
 
 	// Delete task from the database
 	_, e := h.DB.Exec("DELETE FROM tasks WHERE id=?", id)
@@ -132,12 +134,12 @@ func (h *TaskHandler) ListTasks(c *gin.Context) {
 	c.JSON(http.StatusOK, tasks)
 }
 
-//check that id exist in table or not
+// check that id exist in table or not
 func (h *TaskHandler) idExists(id int) (bool, error) {
-    var exists bool
-    err := h.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM tasks WHERE id = ?)", id).Scan(&exists)
-    if err != nil {
-        return false, err
-    }
-    return exists, nil
+	var exists bool
+	err := h.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM tasks WHERE id = ?)", id).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
 }
